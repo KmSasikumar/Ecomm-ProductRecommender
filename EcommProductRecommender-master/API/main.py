@@ -583,13 +583,17 @@ if __name__ == "__main__":
                     # So, we'll create a dummy model using Keras and save it.
                     # This requires model.py to be importable.
                     try:
-                        from .model import create_ncf_model # Relative import
+                        from model import create_ncf_model
                         temp_model = create_ncf_model(dummy_users_count, dummy_items_count, embedding_dim=4) # minimal
                         temp_model.save(_dummy_model_path)
                         print(f"Dummy Keras model saved to {_dummy_model_path}")
                     except Exception as model_ex:
-                        print(f"Could not create full dummy Keras model due to: {model_ex}. Creating placeholder file.")
-                        with open(_dummy_model_path, 'w') as f: f.write("dummy model placeholder - not a valid Keras model")
+                        # Never write a placeholder: a text file at the .h5
+                        # path poisons every later load_model call with a
+                        # misleading "file signature not found" 500.
+                        print(f"Could not create dummy Keras model due to: {model_ex}. Skipping dummy model creation.")
+                        if os.path.exists(_dummy_model_path):
+                            os.remove(_dummy_model_path)
 
 
                 # Create dummy mappings if they don't exist
