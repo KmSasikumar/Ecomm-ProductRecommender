@@ -15,10 +15,11 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { useProducts } from '../hooks/useProducts';
 import { Product } from '../models/Product';
+import { API_BASE_URL } from '../services/apiConfig';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
-const API_BASE_URL = 'http://10.22.134.152:8000';
+
 
 /**
  * Local StateCard component used for Error / Empty states.

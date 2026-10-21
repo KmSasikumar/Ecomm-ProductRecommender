@@ -1,6 +1,7 @@
 // hooks/useProducts.ts
 import { useQuery } from '@tanstack/react-query';
 import { Product } from '../models/Product';
+import { API_BASE_URL } from '../services/apiConfig';
 
 // Define the structure of the API response
 interface SearchApiResponse {
@@ -19,7 +20,7 @@ export const useProducts = () => {
     queryFn: async () => {
       // Make the API call to the new Python endpoint that queries ecommerce.db
       // Send an empty query to get ALL products
-      const response = await fetch(`http://10.22.134.152:8000/search`, {
+      const response = await fetch(`${API_BASE_URL}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

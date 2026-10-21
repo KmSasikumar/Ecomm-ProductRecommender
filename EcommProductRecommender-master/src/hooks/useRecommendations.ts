@@ -1,6 +1,7 @@
 // hooks/useRecommendations.ts
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { API_BASE_URL } from '../services/apiConfig';
 
 // Define the structure matching the API's RecommendationItem
 interface RecommendationItemFromAPI {
@@ -31,7 +32,7 @@ export const useRecommendations = (searchQuery: string) => {
       try {
         const response = await axios({
           method: 'post',
-          url: 'http://10.22.134.152:8000/recommend',
+          url: `${API_BASE_URL}/recommend`,
           headers: {
             'X-API-Key': 'testkey123',
             'Content-Type': 'application/json',

@@ -17,6 +17,7 @@ import type { SearchBarHandle } from '../components/SearchBar';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { useSearchProducts } from '../hooks/useSearchProducts';
 import { Product } from '../models/Product';
+import { API_BASE_URL } from '../services/apiConfig';
 
 type SearchResultsScreenRouteProp = RouteProp<RootStackParamList, 'SearchResults'>;
 type SearchResultsScreenNavigationProp = StackNavigationProp<
@@ -30,7 +31,6 @@ interface RecommendationItemFromAPI {
   score: number;
 }
 
-const API_BASE_URL = 'http://10.22.134.152:8000';
 
 export default function SearchResultsScreen() {
   const route = useRoute<SearchResultsScreenRouteProp>();

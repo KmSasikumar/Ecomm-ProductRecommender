@@ -1,5 +1,6 @@
 // services/productMapping.ts
 import { Product } from '../models/Product';
+import { API_BASE_URL } from './apiConfig';
 
 // --- NEW: Function to fetch product details from the Python API ---
 export const fetchProductByItemId = async (itemId: string): Promise<Product | null> => {
@@ -9,7 +10,7 @@ export const fetchProductByItemId = async (itemId: string): Promise<Product | nu
 
   try {
     // Make the API call to the new Python endpoint that queries ecommerce.db
-    const response = await fetch(`http://10.22.134.152:8000/search`, {
+    const response = await fetch(`${API_BASE_URL}/search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

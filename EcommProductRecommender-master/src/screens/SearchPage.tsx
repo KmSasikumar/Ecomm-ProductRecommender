@@ -16,10 +16,10 @@ import type { SearchBarHandle } from '../components/SearchBar';
 import ProductCard from '../components/ProductCard';
 import { useSearchProducts } from '../hooks/useSearchProducts';
 import { Product } from '../models/Product';
+import { API_BASE_URL } from '../services/apiConfig';
 
 type SearchPageNavigationProp = StackNavigationProp<RootStackParamList, 'SearchPage'>;
 
-const API_BASE_URL = 'http://10.22.134.152:8000';
 
 // Categories for filter pills
 const CATEGORIES = ['Electronics', 'Clothing', 'Home', 'Books'];
