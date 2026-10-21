@@ -1,50 +1,60 @@
 import * as functions from "firebase-functions/v1";
 import axios from "axios";
 
-interface Interaction {
-  productId: string;
-  type: string;
-}
-
-interface Prediction {
-  product_id: string;
-  name?: string;
-  price?: number;
-  category?: string;
-  tags?: string[];
-  imageUrls?: string[];
+// Shape returned by the FastAPI backend's POST /recommend endpoint
+// (API/main.py: RecommendationResponse). The backend requires the
+// X-API-Key header and answers 403 without it.
+interface RecommendationItem {
+  item_id: string;
   score: number;
-  explanation: string;
 }
 
-const API_URL = process.env.API_URL || "http://localhost:8000/recommend";
+interface RecommendationResponse {
+  recommendations: RecommendationItem[];
+  user_id: string;
+}
+
+interface GetRecommendationsData {
+  userId?: string;
+  searchQuery?: string;
+  count?: number;
+}
+
+const API_BASE_URL = process.env.API_URL || "http://localhost:8000";
+const API_KEY = process.env.API_KEY || "testkey123";
 
 export const getRecommendations = functions.https.onCall(
-  async (data) => {
-    const interactions: Interaction[] = []; // Explicitly define the type here
+  async (data: GetRecommendationsData) => {
+    const response = await axios.post<RecommendationResponse>(
+      `${API_BASE_URL}/recommend`,
+      {
+        user_id: data?.userId || "user0",
+        count: typeof data?.count === "number" ? data.count : 10,
+        search_query: data?.searchQuery || "",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY,
+        },
+      }
+    );
 
-    const body = {
-      user_id: "user123",
-      search_query: data.searchQuery || "",
-      interactions: interactions.map((i) => ({
-        product_id: i.productId,
-        type: i.type,
-      })),
-    };
-
-    const { data: preds } = await axios.post(API_URL, body);
-
-    return preds.map((p: Prediction) => ({
+    // /recommend returns {recommendations: [{item_id, score}], user_id} —
+    // an object, not an array, and items carry item_id (not product_id).
+    // Product details are not part of this response; the app resolves them
+    // from the catalog (/search), so only the id is forwarded here.
+    return (response.data.recommendations || []).map((p) => ({
       product: {
-        id: p.product_id,
-        name: p.name || `Product ${p.product_id}`,
-        price: p.price || 0,
-        category: p.category || "",
-        tags: p.tags || [],
-        imageUrls: p.imageUrls || [],
+        id: p.item_id,
+        name: `Product ${p.item_id}`,
+        price: 0,
+        category: "",
+        tags: [] as string[],
+        imageUrls: [] as string[],
       },
       score: p.score,
-      explanation: p.explanation,
+      explanation: "",
     }));
   }
 );
