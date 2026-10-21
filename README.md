@@ -41,10 +41,11 @@ Follow these steps to set up the project locally.
 
 ### 1. Backend Setup (API & ML)
 
-Navigate to the `API` directory and set up the Python environment.
+The application code lives in the `EcommProductRecommender-master/` folder.
+Navigate to its `API` directory and set up the Python environment.
 
 ```bash
-cd API
+cd EcommProductRecommender-master/API
 
 # Create a virtual environment
 python -m venv venv
@@ -55,18 +56,20 @@ python -m venv venv
 # Mac/Linux:
 source venv/bin/activate
 
-# Install Dependencies
-pip install fastapi uvicorn tensorflow pandas numpy scikit-learn pydantic aiofiles
+# Install Dependencies (includes python-multipart, which FastAPI needs
+# at startup for the /v1/train file-upload endpoint)
+pip install -r requirements.txt
 ```
 
-*Note: If you have a `requirements.txt`, use `pip install -r requirements.txt` instead.*
-
-**Initialize the Database:**
+**Seed the product catalog:**
 
 ```bash
-python main.py
+python load_products_to_db.py
 ```
-*(The server will initialize `ecommerce.db` and `user_interactions.db` on first run)*
+*(Loads `products.json` into `ecommerce.db`. The `user_interactions.db` and
+the products table are also created automatically when the server starts,
+but the catalog itself only ever comes from this seed step — without it
+`/search` returns an empty list.)*
 
 **Start the Server:**
 
@@ -77,9 +80,11 @@ The API will be available at `http://localhost:8000`.
 
 ### 2. Frontend Setup (Mobile App)
 
-Open a new terminal and navigate to the project root.
+Open a new terminal and navigate to the app folder.
 
 ```bash
+cd EcommProductRecommender-master
+
 # Install dependencies
 npm install
 
@@ -89,6 +94,11 @@ npx expo start
 
 - Scan the QR code with **Expo Go** (Android/iOS).
 - Or press `a` to run on Android Emulator / `i` for iOS Simulator.
+- The app reaches the backend at `http://localhost:8000` by default (web /
+  simulators). On a **physical device**, point it at your machine's LAN
+  address instead: `EXPO_PUBLIC_API_URL=http://<your-lan-ip>:8000 npx expo start`
+  (or set `apiUrl` under `expo.extra` in `app.json`). The address is
+  configured in exactly one place: `src/services/apiConfig.ts`.
 
 ## 🧪 Usage
 
@@ -98,13 +108,15 @@ npx expo start
 
 ## 📂 Project Structure
 
+Everything below lives under **`EcommProductRecommender-master/`**:
+
 - **`API/`**: Python backend (FastAPI), ML models (`model.py`), and databases.
 - **`src/`**: React Native source code.
     - **`screens/`**: UI pages (Home, Search, Details).
-    - **`services/`**: API integration (Axios).
+    - **`services/`**: API integration (Axios) and `apiConfig.ts` (backend address).
     - **`components/`**: Reusable UI widgets.
-- **`architecture.md`**: Detailed system design diagrams.
-- **`project_synopsis.txt`**: High-level summary for professionals.
+- **`functions/`**: Firebase Cloud Function that proxies recommendation requests.
+- **`architecture.md`** (repo root): Detailed system design diagrams.
 
 ## 👨‍💻 Author
 
