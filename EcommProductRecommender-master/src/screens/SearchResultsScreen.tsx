@@ -16,6 +16,7 @@ import SearchBar from '../components/SearchBar';
 import type { SearchBarHandle } from '../components/SearchBar';
 import { useRecommendations } from '../hooks/useRecommendations';
 import { useSearchProducts } from '../hooks/useSearchProducts';
+import { useProducts } from '../hooks/useProducts';
 import { Product } from '../models/Product';
 import { API_BASE_URL } from '../services/apiConfig';
 
@@ -30,6 +31,7 @@ interface RecommendationItemFromAPI {
   item_id: string;
   score: number;
 }
+
 
 
 export default function SearchResultsScreen() {
@@ -55,51 +57,42 @@ export default function SearchResultsScreen() {
     error: searchResultsError,
   } = useSearchProducts(rawQuery);
 
+  // --- Live catalog, used to resolve recommendation item_ids to products ---
+  const { data: catalog } = useProducts();
+
   // --- Map NCF Recommendations to Product Objects ---
+  // Details come from the live catalog served by the backend. This used to be
+  // a hardcoded copy of the 5 seed products, and any other recommended item
+  // rendered with a fabricated price (score * 100) — a wrong price shown as
+  // real. Unknown items now render with a neutral 0 price placeholder and
+  // their raw id until the catalog knows them.
   const ncfRecommendations: Product[] = useMemo(() => {
-    console.log('Recommendations Data:', recommendationsData); // Debug log
-    
     if (!recommendationsData?.recommendations || recommendationsData.recommendations.length === 0) {
-      console.log('No recommendations returned from API');
       return [];
     }
 
-    console.log('Mapping recommendations:', recommendationsData.recommendations);
-    
-    // Map item_id to actual product details from database
-    const productMapping: { [key: string]: { name: string; price: number; category: string; tags: string[] } } = {
-      'item0': { name: 'Gaming Laptop', price: 1299.99, category: 'Electronics', tags: ['gaming', 'laptop', 'high-performance'] },
-      'item1': { name: 'Wireless Bluetooth Earbuds', price: 129.99, category: 'Electronics', tags: ['audio', 'wireless', 'bluetooth'] },
-      'item2': { name: 'Smart Fitness Watch', price: 199.95, category: 'Wearables', tags: ['fitness', 'smartwatch', 'health'] },
-      'item3': { name: 'Ergonomic Office Chair', price: 249.50, category: 'Furniture', tags: ['office', 'ergonomic', 'comfort'] },
-      'item4': { name: 'Mechanical Gaming Keyboard', price: 89.99, category: 'Electronics', tags: ['gaming', 'keyboard', 'mechanical'] },
-    };
-    
+    const catalogById = new Map((catalog ?? []).map((p) => [p.id, p]));
+
     return recommendationsData.recommendations.map((rec: RecommendationItemFromAPI) => {
-      const productInfo = productMapping[rec.item_id];
-      
-      if (productInfo) {
+      const product = catalogById.get(rec.item_id);
+
+      if (product) {
         return {
-          id: rec.item_id,
-          name: productInfo.name,
-          price: productInfo.price,
-          imageUrls: [`https://via.placeholder.com/150/0000FF/808080?Text=${encodeURIComponent(productInfo.name)}`],
-          category: productInfo.category,
-          tags: [...productInfo.tags, `NCF Score: ${rec.score.toFixed(3)}`],
-        };
-      } else {
-        // Fallback for unknown items
-        return {
-          id: rec.item_id,
-          name: rec.item_id,
-          price: rec.score * 100,
-          imageUrls: [],
-          category: 'Recommended',
-          tags: [`NCF Score: ${rec.score.toFixed(3)}`],
+          ...product,
+          tags: [...product.tags, `NCF Score: ${rec.score.toFixed(3)}`],
         };
       }
+
+      return {
+        id: rec.item_id,
+        name: rec.item_id,
+        price: 0,
+        imageUrls: [],
+        category: 'Recommended',
+        tags: [`NCF Score: ${rec.score.toFixed(3)}`],
+      };
     });
-  }, [recommendationsData]);
+  }, [recommendationsData, catalog]);
 
   // --- Initialize with route params ---
   useEffect(() => {
