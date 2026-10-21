@@ -101,12 +101,26 @@ def train_model(df_processed, num_users, num_items,
     X_item = df_processed['item_idx'].values
     y = df_processed['label'].values
 
-    # Train-validation split (optional, but good practice)
-    X_user_train, X_user_val, X_item_train, X_item_val, y_train, y_val = train_test_split(
-        X_user, X_item, y, test_size=0.2, random_state=42
-    )
+    if len(y) < 2:
+        raise ValueError(
+            "Training data must contain at least 2 usable samples after "
+            f"preprocessing (got {len(y)}). Provide more interactions."
+        )
 
-    print(f"Training with {len(X_user_train)} samples, validating with {len(X_user_val)} samples.")
+    # Train-validation split (optional, but good practice). Very small
+    # datasets cannot be split (test_size=0.2 leaves an empty train or
+    # validation partition below ~10 samples and sklearn raises), so tiny
+    # datasets train on all samples and validate on the same data.
+    if len(y) >= 10:
+        X_user_train, X_user_val, X_item_train, X_item_val, y_train, y_val = train_test_split(
+            X_user, X_item, y, test_size=0.2, random_state=42
+        )
+        validation_data = ([X_user_val, X_item_val], y_val)
+    else:
+        X_user_train, X_item_train, y_train = X_user, X_item, y
+        validation_data = ([X_user, X_item], y)
+
+    print(f"Training with {len(X_user_train)} samples, validating with {len(validation_data[1])} samples.")
 
     model = create_ncf_model(num_users, num_items, embedding_dim, mlp_layers)
 
@@ -117,7 +131,7 @@ def train_model(df_processed, num_users, num_items,
     print("Starting model training...")
     history = model.fit(
         [X_user_train, X_item_train], y_train,
-        validation_data=([X_user_val, X_item_val], y_val),
+        validation_data=validation_data,
         batch_size=batch_size,
         epochs=epochs,
         verbose=1

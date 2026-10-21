@@ -326,6 +326,10 @@ async def train_new_model(training_data: UploadFile = File(...)):
         )
     except HTTPException as he:
         raise he
+    except ValueError as ve:
+        # Unusable training data (e.g. too few samples) is a client error,
+        # not a server fault.
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         print(f"An unexpected error occurred during training: {e}")
         if new_api_key_generated and os.path.exists(os.path.join(MODELS_BASE_DIR, new_api_key_generated)):
