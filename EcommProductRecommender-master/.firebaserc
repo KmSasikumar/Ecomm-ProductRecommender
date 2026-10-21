@@ -1,6 +1,6 @@
 {
   "projects": {
-    "First Project": "ecomm-recommender-rn"
+    "default": "ecomm-recommender-rn"
   },
   "targets": {},
   "etags": {}
