@@ -84,7 +84,11 @@ app = FastAPI(title="E-commerce Recommendation System API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # Wildcard origins must not be combined with credentials: Starlette
+    # reflects ANY origin with Access-Control-Allow-Credentials: true in
+    # that configuration. This API authenticates with the X-API-Key
+    # header, not cookies, so credentialed CORS is not needed.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
