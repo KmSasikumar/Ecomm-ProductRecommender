@@ -1,5 +1,5 @@
 // screens/SearchPage.tsx
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,21 +15,20 @@ import SearchBar from '../components/SearchBar';
 import type { SearchBarHandle } from '../components/SearchBar';
 import ProductCard from '../components/ProductCard';
 import { useSearchProducts } from '../hooks/useSearchProducts';
+import { useProducts } from '../hooks/useProducts';
 import { Product } from '../models/Product';
 import { API_BASE_URL } from '../services/apiConfig';
 
 type SearchPageNavigationProp = StackNavigationProp<RootStackParamList, 'SearchPage'>;
 
 
-// Categories for filter pills
-const CATEGORIES = ['Electronics', 'Clothing', 'Home', 'Books'];
 
 export default function SearchPage() {
   const navigation = useNavigation<SearchPageNavigationProp>();
   const searchInputRef = useRef<SearchBarHandle>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Electronics');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [recentSearches, setRecentSearches] = useState([
     'iPhone case',
     'Wireless headphones',
@@ -42,6 +41,28 @@ export default function SearchPage() {
     isLoading,
     error,
   } = useSearchProducts(searchQuery);
+
+  // Category pills are derived from the live catalog (the old hardcoded list
+  // named categories the catalog does not have) and actually filter the
+  // results — the selection used to be stored but never applied.
+  const { data: catalog } = useProducts();
+  const categories = useMemo(
+    () => [
+      'All',
+      ...Array.from(
+        new Set((catalog ?? []).map((p) => p.category).filter(Boolean))
+      ),
+    ],
+    [catalog]
+  );
+  const visibleResults = useMemo(() => {
+    if (!searchResults) {
+      return [];
+    }
+    return selectedCategory === 'All'
+      ? searchResults
+      : searchResults.filter((p) => p.category === selectedCategory);
+  }, [searchResults, selectedCategory]);
 
   // --- Function to send interaction to backend ---
   const sendInteractionToBackend = async (
@@ -175,7 +196,7 @@ export default function SearchPage() {
 
       {/* Category Pills */}
       <View style={styles.categoriesContainer}>
-        {CATEGORIES.map((category) => (
+        {categories.map((category) => (
           <TouchableOpacity
             key={category}
             style={[
@@ -230,7 +251,7 @@ export default function SearchPage() {
 
           {!isLoading && !error && (
             <FlatList
-              data={searchResults || []}
+              data={visibleResults}
               keyExtractor={(item) => item.id}
               renderItem={renderProductItem}
               contentContainerStyle={styles.listContainer}
