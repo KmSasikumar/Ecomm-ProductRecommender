@@ -232,13 +232,16 @@ def search_products_in_db(query_term: str):
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
 
-        search_pattern = f"%{query_term.lower()}%"
+        # Escape LIKE wildcards so the query matches literally (searching
+        # "%" or "_" used to return the entire catalog).
+        escaped_term = query_term.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{escaped_term}%"
         c.execute('''
             SELECT id, name, price, category, image_urls, tags
             FROM products
-            WHERE LOWER(name) LIKE ?
-               OR LOWER(category) LIKE ?
-               OR LOWER(tags) LIKE ?
+            WHERE LOWER(name) LIKE ? ESCAPE '\\'
+               OR LOWER(category) LIKE ? ESCAPE '\\'
+               OR LOWER(tags) LIKE ? ESCAPE '\\'
         ''', (search_pattern, search_pattern, search_pattern))
 
         rows = c.fetchall()
