@@ -160,7 +160,15 @@ def get_model_and_mappings_for_key(api_key: str):
         model = load_model(model_data["model_path"])
         user_map, item_map = load_mappings(model_data["mappings_path"])
         idx_to_item_map = {idx: item_id for item_id, idx in item_map.items()}
-        return model, user_map, item_map, idx_to_item_map, model_data.get("num_users"), model_data.get("num_items")
+        # The mappings are the ground truth for the model's dimensions.
+        # API_KEYS_DB only carries num_users/num_items for keys trained in
+        # this process (or set by the __main__ bootstrap), so relying on the
+        # stored values made every pre-existing key fail with "Number of
+        # items not available" whenever the server was started the README
+        # way (`uvicorn main:app`).
+        num_users = model_data.get("num_users") or len(user_map)
+        num_items = model_data.get("num_items") or len(item_map)
+        return model, user_map, item_map, idx_to_item_map, num_users, num_items
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading model/mappings: {str(e)}")
 
