@@ -28,6 +28,20 @@ def load_products_to_database():
     conn = None
     try:
         conn = sqlite3.connect(DATABASE_PATH)
+        # Create the table when run standalone: sqlite3.connect() creates an
+        # empty database file but no table, so every insert used to fail
+        # with "no such table: products" and 0 products were loaded.
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS products (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                price REAL NOT NULL,
+                category TEXT,
+                image_urls TEXT,
+                tags TEXT
+            )
+        ''')
+        conn.commit()
         c = conn.cursor()
 
         inserted_or_updated_count = 0
