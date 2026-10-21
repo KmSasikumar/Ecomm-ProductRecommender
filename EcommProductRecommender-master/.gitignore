@@ -29,3 +29,16 @@ dist/
 # logs
 *.log
 node_modules
+
+# Expo / React Native (caches and build output were committed without these)
+.expo/
+web-build/
+.expo-shared/
+
+# Local environment files
+.env
+.env*.local
+
+# Firebase
+firebase-debug.log
+firebase-debug.*.log
